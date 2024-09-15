@@ -2,109 +2,50 @@
 
 Vortex is a full-stack open-source RISC-V GPGPU.
 
-## Specifications
+## Update
 
-- Support RISC-V RV32IMAF and RV64IMAFD
-- Microarchitecture:
-    - configurable number of cores, warps, and threads.
-    - configurable number of ALU, FPU, LSU, and SFU units per core.
-    - configurable pipeline issue width.
-    - optional local memory, L1, L2, and L3 caches.
-- Software:
-    - OpenCL 1.2 Support.
-- Supported FPGAs:
-    - Altera Arria 10
-    - Altera Stratix 10
-    - Xilinx Alveo U50, U250, U280
-    - Xilinx Versal VCK5000
+- add VX_socket_top which allows sv2v to generate project.v at socket level.
 
-## Directory structure
-
-- `doc`: [Documentation](docs/index.md).
-- `hw`: Hardware sources.
-- `driver`: Host drivers repository.
-- `runtime`: Kernel Runtime software.
-- `sim`: Simulators repository.
-- `tests`: Tests repository.
-- `ci`: Continuous integration scripts.
-- `miscs`: Miscellaneous resources.
-
-## Build Instructions
-More detailed build instructions can be found [here](docs/install_vortex.md).
-### Supported OS Platforms
-- Ubuntu 18.04, 20.04
-- Centos 7
-### Toolchain Dependencies
-- [POCL](http://portablecl.org/)
-- [LLVM](https://llvm.org/)
-- [RISCV-GNU-TOOLCHAIN](https://github.com/riscv-collab/riscv-gnu-toolchain)
-- [Verilator](https://www.veripool.org/verilator)
-- [FpNew](https://github.com/pulp-platform/fpnew.git)
-- [SoftFloat](https://github.com/ucb-bar/berkeley-softfloat-3.git)
-- [Ramulator](https://github.com/CMU-SAFARI/ramulator.git)
-- [Yosys](https://github.com/YosysHQ/yosys)
-- [Sv2v](https://github.com/zachjs/sv2v)
 ### Install development tools
-```sh
-sudo apt-get install build-essential
-sudo apt-get install binutils
-sudo apt-get install python
-sudo apt-get install uuid-dev
-sudo apt-get install git
-```
-### Install Vortex codebase
-```sh
-	git clone --depth=1 --recursive https://github.com/vortexgpgpu/vortex.git
-	cd vortex
-```
-### Configure your build folder
-```sh
-    mkdir build
-    cd build
-    # for 32bit
-    ../configure --xlen=32 --tooldir=$HOME/tools
-    # for 64bit
-    ../configure --xlen=64 --tooldir=$HOME/tools
-```
-### Install prebuilt toolchain
-```sh
-   ./ci/toolchain_install.sh --all
-```
-### set environment variables
-```sh
-    # should always run before using the toolchain!
-    source ./ci/toolchain_env.sh
-```
-### Building Vortex
-```sh
-make -s
-```
-### Quick demo running vecadd OpenCL kernel on 2 cores
-```sh
-./ci/blackbox.sh --cores=2 --app=vecadd
-```
+1. Install the following dependencies:
 
-### Common Developer Tips
-- Installing Vortex kernel and runtime libraries to use with external tools requires passing --prefix=<install-path> to the configure script.
-```sh
-../configure --xlen=32 --tooldir=$HOME/tools --prefix=<install-path>
-make -s
-make install
-```
-- Building Vortex 64-bit simply requires using --xlen=64 configure option.
-```sh
-../configure --xlen=32 --tooldir=$HOME/tools
-```
-- Sourcing "./ci/toolchain_env.sh" is required everytime you start a new terminal. we recommend adding "source <build-path>/ci/toolchain_env.sh" to your ~/.bashrc file to automate the process at login.
-```sh
-echo "source <build-path>/ci/toolchain_env.sh" >> ~/.bashrc
-```
-- Making changes to Makefiles in your source tree or adding new folders will require executing the "configure" script again to get it propagated into your build folder.
-```sh
-../configure
-```
-- To debug the GPU, you can generate a "run.log" trace. see /docs/debugging.md for more information.
-```sh
-./ci/blackbox.sh --app=demo --debug=3
-```
-- For additional information, check out the /docs.
+   ```
+   sudo apt-get install build-essential zlib1g-dev libtinfo-dev libncurses5 uuid-dev libboost-serialization-dev libpng-dev libhwloc-dev
+   ```
+
+2. Upgrade GCC to 11:
+
+   ```
+   sudo apt-get install gcc-11 g++-11
+   ```
+
+   Multiple gcc versions on Ubuntu can be managed with update-alternatives, e.g.:
+
+   ```
+   sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 9
+   sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 9
+   sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 11
+   sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 11
+   ```
+
+3. Download the Vortex codebase:
+
+   ```
+   git clone --depth=1 --recursive https://github.com/Huaiguangooo/vortex_mod.git
+   ```
+4. Build Vortex
+
+   ```
+   $ cd vortex
+   $ mkdir -p build
+   $ cd build
+   $ ../configure --xlen=32 --tooldir=$HOME/tools
+   $ ./ci/toolchain_install.sh --all
+   $ source ./ci/toolchain_env.sh
+   $ make -s
+   ```
+5. Get project.v of VX_socket_top
+   ```
+   $ cd build/hw/syn/yosys
+   $ make
+   ```

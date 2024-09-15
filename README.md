@@ -58,7 +58,7 @@ Vortex is a full-stack open-source RISC-V GPGPU.
 
 ### How FPU_FPNEW is not instantiated
 
-Default defined macros:
+Default defined macros.
 ```
 `define NDEBUG
 `define SYNTHESIS
@@ -68,7 +68,7 @@ Default defined macros:
 `define NUM_CORES 1
 ```
 
-* VX_config.vh
+In `hw/rtl/VX_config.vh`, we have:
 ```
 `ifdef XLEN_64
 `ifndef FPU_DSP
@@ -79,7 +79,7 @@ Default defined macros:
 `endif
 ```
 
-here EXT_D_ENABLE is not defined.
+Here `EXT_D_ENABLE` is not defined.
 
 ```
 `ifdef EXT_D_ENABLE
@@ -89,7 +89,7 @@ here EXT_D_ENABLE is not defined.
 `endif
 ```
 
-here FLEN_64 is defined.
+Here `FLEN_64` is defined.
 
 ```
 `ifndef FPU_FPNEW
@@ -109,9 +109,9 @@ here FLEN_64 is defined.
 `endif
 ```
 
-here **FPU_DSP** is defined.
+Here **FPU_DSP** is defined.
 
-therefore, in ./hw/rtl/core/VX_fpu_unit.sv, we have this.
+Herefore, in `./hw/rtl/core/VX_fpu_unit.sv`, we have this.
 ```
     `ifdef FPU_DPI
 
@@ -203,9 +203,9 @@ therefore, in ./hw/rtl/core/VX_fpu_unit.sv, we have this.
     `endif
 ```
 
-Here, because FPU_DSP is defined, in VX_fpu_dsp.sv, VX_fpu_sqrt is instantiated.
+Here, because `FPU_DSP` is defined, in `./hw/rtl/fpu/VX_fpu_dsp.sv`, `VX_fpu_sqrt` is instantiated.
 
-In hw/rtl/fpu/VX_fpu_sqrt.sv, we have
+In `hw/rtl/fpu/VX_fpu_sqrt.sv`, we have
 ```
 `ifdef QUARTUS
 
@@ -285,15 +285,15 @@ Because we don't specify implementation platform, DPI function is called, preven
 
 ### How to instantiate FPU_FPNEW
 
-We define XLEN to be 64 by modifying `build/common.mk`
+We define `XLEN` to be 64 by modifying `./build/common.mk`
 
 ```
 XLEN ?= 64
 ```
 
-We define FPU_FPNEW in VX_config.vh at the beginning.
+We define `FPU_FPNEW` in `./hw/rtl/VX_config.vh` at the beginning.
 
-We modify yosys/Makefile.
+We modify `./build/hw/syn/yosys/Makefile`.
 ```
 # include paths
 FPU_INCLUDE = -I$(RTL_DIR)/fpu

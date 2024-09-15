@@ -93,14 +93,21 @@ if [ "$copy_folder" != "" ]; then
                     $script_dir/repl_params.py $params_str -T$top_module $file > $temp_file
                     verilator $defines_str $includes_str -E -P $temp_file > $copy_folder/$file_name
                 else
+                    # echo "preprocessing $file to $copy_folder"
                     verilator $defines_str $includes_str -E -P $file > $copy_folder/$file_name
                 fi                
             else
+                # echo "copying $file to $copy_folder"
                 cp $file $copy_folder
             fi
         done
     done
 fi
+
+# print ${externs[@]}
+echo "externs: ${externs[@]}"
+# print output_file
+echo "outpusssst_file: $output_file"
 
 if [ "$output_file" != "" ]; then
     {

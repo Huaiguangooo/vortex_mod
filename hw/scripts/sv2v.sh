@@ -69,6 +69,13 @@ do
     done
 done
 
+# process defined macros and dump them
+echo "Defined macros:"
+for macro in $macro_args
+do
+    echo "$macro"
+done
+
 # system-verilog to verilog conversion
 echo "sv2v $top $macro_args $inc_args $file_args -v -w $output_file"
 sv2v $top $macro_args $inc_args $file_args -v -w $output_file

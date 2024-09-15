@@ -36,7 +36,7 @@ Vortex is a full-stack open-source RISC-V GPGPU.
 4. Build Vortex
 
    ```
-   $ cd vortex
+   $ cd vortex_mod
    $ mkdir -p build
    $ cd build
    $ ../configure --xlen=32 --tooldir=$HOME/tools

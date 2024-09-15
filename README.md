@@ -49,3 +49,9 @@ Vortex is a full-stack open-source RISC-V GPGPU.
    $ cd build/hw/syn/yosys
    $ make
    ```
+6. An error will be raised
+   ```
+    Generating RTLIL representation for module `$paramod$02ebeaaba3aa0519d7f252fbf0c762a441a16060\VX_fpu_sqrt'.
+    project.v:1323: ERROR: Can't resolve task name `\dpi_fsqrt'.
+    make: *** [Makefile:87: build] Error 1
+   ```

@@ -3,7 +3,7 @@ include $(ROOT_DIR)/config.mk
 
 SRC_DIR := $(VORTEX_HOME)/hw/syn/yosys
 
-TOP_LEVEL_ENTITY ?= Vortex
+TOP_LEVEL_ENTITY ?= VX_socket_top
 PREFIX ?= build
 NUM_CORES ?= 1
 

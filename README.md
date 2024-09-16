@@ -428,7 +428,91 @@ This affects the pipeline configuration. In `./hw/rtl/VX_config.vh`, we have the
 Take ALU as an example. After the modification, we have `NUM_ALU_LANES=32` and `NUM_ALU_BLOCKS=8`.
 
 So we add the following to the top of `VX_config.vh`.
-````
+```
 `define NUM_WARPS 64
 `define NUM_THREADS 32
 ```
+### How to replace SRAM
+
+#### Vortex Cache Instantiation Hierarchy
+
+* In `VX_cache_cluster`, `VX_cache_wrap` is instantiated.
+    * In `VX_cache_wrap`, `VX_cache` is instantiated.
+        * In `VX_cache`, `VX_cache_bank` is instantiated. So each bank is instantiated seperately.
+            * In `VX_cache_bank`, `VX_cache_tag`, `VX_cache_data`, `VX_cache_mshr` is instantiated.
+                * In `VX_cache_data`, `VX_sp_ram` is instantiated.
+
+So, we use SRAM compiler to generate single-port SRAM macro and replace the content in `VX_sp_ram`.
+
+#### How to replace Socket-level SRAM
+
+In `./hw/rtl/VX_socket.sv`, mainly two SRAMs are instantiated.
+```
+    VX_cache_cluster #(
+        .INSTANCE_ID    ($sformatf("%s-icache", INSTANCE_ID)),
+        .NUM_UNITS      (((((((4) < (4)) ? (4) : (4)) / 4) != 0) ? ((((4) < (4)) ? (4) : (4)) / 4) : 1)),
+        .NUM_INPUTS     ((((4) < (4)) ? (4) : (4))),
+        .TAG_SEL_IDX    (0),
+        .CACHE_SIZE     (16384),
+        .LINE_SIZE      (ICACHE_LINE_SIZE),
+        .NUM_BANKS      (1),
+        .NUM_WAYS       (1),
+        .WORD_SIZE      (ICACHE_WORD_SIZE),
+        .NUM_REQS       (1),
+        .CRSQ_SIZE      (2),
+        .MSHR_SIZE      (16),
+        .MRSQ_SIZE      (0),
+        .MREQ_SIZE      (4),
+        .TAG_WIDTH      (ICACHE_TAG_WIDTH),
+        .UUID_WIDTH     (1),
+        .WRITE_ENABLE   (0),
+        .NC_ENABLE      (0),
+        .CORE_OUT_BUF   (2),
+        .MEM_OUT_BUF    (2)
+    ) icache (
+        .clk            (clk),
+        .reset          (icache_reset),
+        .core_bus_if    (per_core_icache_bus_if),
+        .mem_bus_if     (icache_mem_bus_if)
+    );
+
+    VX_cache_cluster #(
+        .INSTANCE_ID    ($sformatf("%s-dcache", INSTANCE_ID)),
+        .NUM_UNITS      (((((((4) < (4)) ? (4) : (4)) / 4) != 0) ? ((((4) < (4)) ? (4) : (4)) / 4) : 1)),
+        .NUM_INPUTS     ((((4) < (4)) ? (4) : (4))),
+        .TAG_SEL_IDX    (0),
+        .CACHE_SIZE     (16384),
+        .LINE_SIZE      (DCACHE_LINE_SIZE),
+        .NUM_BANKS      ((((32) < (4)) ? (32) : (4))),
+        .NUM_WAYS       (1),
+        .WORD_SIZE      (DCACHE_WORD_SIZE),
+        .NUM_REQS       (DCACHE_NUM_REQS),
+        .CRSQ_SIZE      (2),
+        .MSHR_SIZE      (16),
+        .MRSQ_SIZE      (0),
+        .MREQ_SIZE      (0 ? 16 : 4),
+        .TAG_WIDTH      (DCACHE_TAG_WIDTH),
+        .UUID_WIDTH     (1),
+        .WRITE_ENABLE   (1),
+        .WRITEBACK      (0),
+        .DIRTY_BYTES    (0),
+        .NC_ENABLE      (1),
+        .CORE_OUT_BUF   (2),
+        .MEM_OUT_BUF    (2)
+    ) dcache (
+        .clk            (clk),
+        .reset          (dcache_reset),
+        .core_bus_if    (per_core_dcache_bus_if),
+        .mem_bus_if     (dcache_mem_bus_if)
+    );
+```
+
+So we define two verilog files to replace the functionality of `VX_sp_ram` to represent ICache and DCache.
+
+#### How to replace Core-level SRAM
+
+* In `VX_core`, `VX_lmem_unit` is instantiated.
+    * In `VX_lmem_unit`, `VX_local_mem` is instantiated.
+        * In `VX_local_mem`, `VX_sp_ram` is instantiated for each separate bank.
+
+Interestingly, I don't see the ICache instantiation.

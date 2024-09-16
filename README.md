@@ -310,3 +310,125 @@ RTL_INCLUDE += $(FPU_INCLUDE)
 
 Then we run `make gen-sources`, which will copy needed files to build_top_module/src and expand MACRO definitions.
 This should be enough for further synthesis and implementation.
+
+### How to modify the number of cores, sockets and clusters
+
+In `./hw/rtl/VX_config.vh`, we have the following.
+```
+`ifndef NUM_CLUSTERS
+`define NUM_CLUSTERS 1
+`endif
+
+`ifndef NUM_CORES
+`define NUM_CORES 1
+`endif
+
+`ifndef SOCKET_SIZE
+`define SOCKET_SIZE `MIN(4, `NUM_CORES)
+`endif
+```
+
+In `./hw/rtl/VX_define.vh`, we have the following.
+```
+`define NUM_SOCKETS     `UP(`NUM_CORES / `SOCKET_SIZE)
+```
+
+This is the static definition of hardware parameters.
+So one socket has a maximum of four cores.
+The `NUM_SOCKETS` parameter is defined by `NUM_CORES` and `SOCKET_SIZE`
+
+In `/build/hw/syn/yosys/Makefile`, we can pass different configurations to add macro definitions.
+```
+NUM_CORES ?= 1
+
+# cluster configuration
+CONFIGS_1c  := -DNUM_CLUSTERS=1 -DNUM_CORES=1
+CONFIGS_2c  := -DNUM_CLUSTERS=1 -DNUM_CORES=2
+CONFIGS_4c  := -DNUM_CLUSTERS=1 -DNUM_CORES=4  -DL2_ENABLE
+CONFIGS_8c	:= -DNUM_CLUSTERS=1 -DNUM_CORES=8  -DL2_ENABLE
+CONFIGS_16c	:= -DNUM_CLUSTERS=1 -DNUM_CORES=16 -DL2_ENABLE
+CONFIGS_32c := -DNUM_CLUSTERS=2 -DNUM_CORES=16 -DL2_ENABLE
+CONFIGS_64c := -DNUM_CLUSTERS=4 -DNUM_CORES=16 -DL2_ENABLE
+CONFIGS += $(CONFIGS_$(NUM_CORES)c)
+```
+
+By defining the number of clusters and cores, the number of sockets is naturally defined.
+For the implementation of an equivalent SM, we use `CONFIGS_4c`.
+
+**So we set `NUM_CORES=4` when invoking `Makefile`**.
+
+```bash
+make NUM_CORES=4 gen-sources
+```
+
+### How to modify the number of warps and threads.
+
+In `./hw/rtl/VX_config.vh`, we have the following.
+```
+`ifndef NUM_WARPS
+`define NUM_WARPS 4
+`endif
+
+`ifndef NUM_THREADS
+`define NUM_THREADS 4
+`endif
+
+`ifndef NUM_BARRIERS
+`define NUM_BARRIERS `UP(`NUM_WARPS/2)
+`endif
+```
+#### Vortex GPGPU Execution Model
+
+Vortex uses the SIMT execution model with a single warp issued per cycle.
+
+- **Threads**
+  - Smallest unit of computation
+  - Each thread has its own register file (32 int + 32 fp registers)
+  - Threads execute in parallel
+- **Warps**
+  - A logical clster of threads
+  - Each thread in a warp execute the same instruction
+    - The PC is shared; maintain thread mask for Writeback
+  - Warp's execution is time-multiplexed at log steps
+    - Ex. warp 0 executes at cycle 0, warp 1 executes at cycle 1
+
+#### NVIDIA A100 Execution Model
+
+* Threads / Warp: 32
+* Max Warps / SM: 64 
+
+#### Our modification
+
+So `NUM_THREADS` should be changed to 32, `NUM_WARPS` should be changed to 64.
+
+This affects the pipeline configuration. In `./hw/rtl/VX_config.vh`, we have the following.
+```
+// Issue width
+`ifndef ISSUE_WIDTH
+`define ISSUE_WIDTH     `UP(`NUM_WARPS / 8)
+`endif
+
+// Number of ALU units
+`ifndef NUM_ALU_LANES
+`define NUM_ALU_LANES   `NUM_THREADS
+`endif
+`ifndef NUM_ALU_BLOCKS
+`define NUM_ALU_BLOCKS  `ISSUE_WIDTH
+`endif
+
+// Number of FPU units
+`ifndef NUM_FPU_LANES
+`define NUM_FPU_LANES   `NUM_THREADS
+`endif
+`ifndef NUM_FPU_BLOCKS
+`define NUM_FPU_BLOCKS  `ISSUE_WIDTH
+`endif
+```
+
+Take ALU as an example. After the modification, we have `NUM_ALU_LANES=32` and `NUM_ALU_BLOCKS=8`.
+
+So we add the following to the top of `VX_config.vh`.
+````
+`define NUM_WARPS 64
+`define NUM_THREADS 32
+```

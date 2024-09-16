@@ -14,7 +14,13 @@
 `ifndef VX_CONFIG_VH
 `define VX_CONFIG_VH
 
+
+// Added by ZZT
 `define FPU_FPNEW
+`define NUM_WARPS 64
+`define NUM_THREADS 32
+
+//
 
 `ifndef MIN
 `define MIN(x, y)   (((x) < (y)) ? (x) : (y))
